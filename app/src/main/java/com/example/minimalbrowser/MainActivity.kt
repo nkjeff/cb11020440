@@ -78,7 +78,7 @@ class MainActivity : Activity() {
             hint = "搜索或输入网址"
             imeOptions = EditorInfo.IME_ACTION_GO
             setPadding(dp(14), 0, dp(10), 0)
-            background = rounded(Color.BLACK, 24)
+            background = rounded(Color.BLACK, 12)
             setOnLongClickListener {
                 val value = text.toString().trim()
                 if (value.isNotEmpty()) {
@@ -95,8 +95,8 @@ class MainActivity : Activity() {
                 } else false
             }
         }
-        val addressWidth = (resources.displayMetrics.widthPixels * 0.50f).toInt()
-        top.addView(address, LinearLayout.LayoutParams(addressWidth.coerceAtLeast(dp(120)), dp(32)))
+        val addressWidth = (resources.displayMetrics.widthPixels * 0.70f).toInt()
+        top.addView(address, LinearLayout.LayoutParams(addressWidth.coerceAtLeast(dp(160)), dp(36)))
         root.addView(top)
 
         pageHost = FrameLayout(this).apply { setBackgroundColor(Color.BLACK) }
@@ -225,7 +225,6 @@ class MainActivity : Activity() {
         val list = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(16), dp(8), dp(16), dp(8))
-            setBackgroundColor(Color.TRANSPARENT)
         }
         val scroll = android.widget.ScrollView(this).apply {
             isFillViewport = true
@@ -390,7 +389,6 @@ class MainActivity : Activity() {
         }
         fun addTile(name: String, url: String?, index: Int = -1) {
             val tile = FrameLayout(this).apply {
-                setBackgroundColor(Color.TRANSPARENT)
                 minimumHeight = dp(52)
                 isClickable = true
                 isFocusable = true
@@ -489,9 +487,6 @@ class MainActivity : Activity() {
     private fun updateNavigation() {
         if (!::backButton.isInitialized) return
         val web = currentWeb()
-        backButton.alpha = if (web?.canGoBack() == true) 1f else 0.3f
-        forwardButton.alpha = if (web?.canGoForward() == true) 1f else 0.3f
-        refreshButton.alpha = if (web != null) 1f else 0.3f
         tabsButton.text = if (tabs.size > 9) "9+" else tabs.size.toString()
     }
 
@@ -505,7 +500,6 @@ class MainActivity : Activity() {
         isFocusable = true
         background = android.graphics.drawable.StateListDrawable().apply {
             addState(intArrayOf(android.R.attr.state_pressed), rounded(Color.BLACK, 12))
-            addState(intArrayOf(), rounded(Color.TRANSPARENT, 12))
         }
         setOnClickListener { action() }
     }
