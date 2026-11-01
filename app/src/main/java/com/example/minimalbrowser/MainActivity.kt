@@ -328,8 +328,13 @@ class MainActivity : Activity() {
 
     private fun showWebContent(web: WebView) {
         pageHost.removeAllViews()
-        (web.parent as? ViewGroup)?.removeView(web)
-        pageHost.addView(web, FrameLayout.LayoutParams(-1, -1))
+        val tab = tabs.firstOrNull { it.web === web } ?: return
+        if (tab.url.isBlank() || tab.url == "about:blank") {
+            pageHost.addView(buildBlankPage(), FrameLayout.LayoutParams(-1, -1))
+        } else {
+            (web.parent as? ViewGroup)?.removeView(web)
+            pageHost.addView(web, FrameLayout.LayoutParams(-1, -1))
+        }
     }
 
     private fun loadShortcuts() {
