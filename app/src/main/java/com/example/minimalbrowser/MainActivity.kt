@@ -467,7 +467,7 @@ class MainActivity : Activity() {
                 if (!url.startsWith("https://", true) && !url.startsWith("http://", true)) {
                     url = "https://$url"
                 }
-                shortcuts.add(Shortcut(name, url))
+                shortcuts.add(Shortcut(url, url))
                 saveShortcuts()
                 dialog.dismiss()
                 refreshBlankPage()
