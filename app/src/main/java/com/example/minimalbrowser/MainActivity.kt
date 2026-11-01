@@ -356,7 +356,7 @@ class MainActivity : Activity() {
                 val item = array.getJSONObject(i)
                 val name = item.optString("name").trim()
                 val url = item.optString("url").trim()
-                if (name.isNotEmpty() && url.isNotEmpty()) shortcuts.add(Shortcut(name, url))
+                if (name.isNotEmpty() && url.isNotEmpty()) shortcuts.add(Shortcut(url, url))
             }
         } catch (_: Exception) {
             shortcuts.clear()
@@ -378,7 +378,7 @@ class MainActivity : Activity() {
             isFillViewport = true
         }
         val grid = GridLayout(this).apply {
-            columnCount = 3
+            columnCount = 1
             useDefaultMargins = false
             setPadding(dp(14), dp(22), dp(14), dp(22))
         }
@@ -443,20 +443,13 @@ class MainActivity : Activity() {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(20), dp(8), dp(20), 0)
         }
-        val nameInput = EditText(this).apply {
-            hint = "名称"
-            setSingleLine(true)
-            setTextColor(Color.WHITE)
-            setHintTextColor(Color.LTGRAY)
-        }
         val urlInput = EditText(this).apply {
-            hint = "网址，例如 https://example.com"
+            hint = "输入网址"
             setSingleLine(true)
             setTextColor(Color.WHITE)
             setHintTextColor(Color.LTGRAY)
             inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_URI
         }
-        fields.addView(nameInput)
         fields.addView(urlInput)
         val dialog = AlertDialog.Builder(this)
             .setTitle("新增快捷入口")
@@ -466,10 +459,9 @@ class MainActivity : Activity() {
             .create()
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                val name = nameInput.text.toString().trim()
                 var url = urlInput.text.toString().trim()
-                if (name.isEmpty() || url.isEmpty()) {
-                    Toast.makeText(this, "请填写名称和网址", Toast.LENGTH_SHORT).show()
+                if (url.isEmpty()) {
+                    Toast.makeText(this, "请输入网址", Toast.LENGTH_SHORT).show()
                     return@setOnClickListener
                 }
                 if (!url.startsWith("https://", true) && !url.startsWith("http://", true)) {
