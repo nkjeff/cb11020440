@@ -447,7 +447,7 @@ class MainActivity : Activity() {
         }
         shortcuts.forEachIndexed { index, shortcut -> addTile(shortcut.name, shortcut.url, index) }
         addTile("＋", null)
-        scroll.addView(grid, ScrollView.LayoutParams(-1, -2))
+        scroll.addView(grid, ViewGroup.LayoutParams(-1, -2))
         return scroll
     }
 
