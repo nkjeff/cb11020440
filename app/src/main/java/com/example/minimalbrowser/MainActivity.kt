@@ -77,9 +77,7 @@ class MainActivity : Activity() {
                 } else false
             }
         }
-        top.addView(address, LinearLayout.LayoutParams(0, dp(44), 1f))
-        val go = button("↵", 24f) { loadFromAddress() }
-        top.addView(go, LinearLayout.LayoutParams(dp(44), dp(44)))
+        top.addView(address, LinearLayout.LayoutParams(-1, dp(44)))
         root.addView(top)
 
         pageHost = FrameLayout(this).apply { setBackgroundColor(translucentBlack) }
