@@ -380,11 +380,12 @@ class MainActivity : Activity() {
         val grid = GridLayout(this).apply {
             columnCount = 1
             useDefaultMargins = false
-            setPadding(dp(14), dp(22), dp(14), dp(22))
+            setPadding(dp(14), dp(12), dp(14), dp(12))
         }
         fun addTile(name: String, url: String?, index: Int = -1) {
             val tile = FrameLayout(this).apply {
                 setBackgroundColor(Color.TRANSPARENT)
+                minimumHeight = dp(52)
                 isClickable = true
                 isFocusable = true
                 setOnClickListener {
@@ -405,7 +406,7 @@ class MainActivity : Activity() {
             val content = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
                 gravity = Gravity.CENTER
-                setPadding(dp(5), dp(10), dp(5), dp(10))
+                setPadding(dp(5), dp(3), dp(5), dp(3))
             }
             content.addView(TextView(this).apply {
                 text = url ?: "＋"
@@ -419,9 +420,9 @@ class MainActivity : Activity() {
             tile.addView(content, FrameLayout.LayoutParams(-1, -2))
             grid.addView(tile, GridLayout.LayoutParams().apply {
                 width = 0
-                height = dp(104)
+                height = -2
                 columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
-                setMargins(dp(2), dp(2), dp(2), dp(2))
+                setMargins(0, dp(1), 0, dp(1))
             })
         }
         shortcuts.forEachIndexed { index, shortcut -> addTile(shortcut.name, shortcut.url, index) }
