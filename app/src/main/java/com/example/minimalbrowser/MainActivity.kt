@@ -10,6 +10,7 @@ import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
+import android.view.View
 import android.view.Gravity
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
@@ -20,13 +21,19 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.EditText
 import android.widget.FrameLayout
+import android.widget.GridLayout
+import android.widget.ScrollView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import java.net.URLEncoder
+import org.json.JSONArray
+import org.json.JSONObject
 
 class MainActivity : Activity() {
     private data class BrowserTab(val web: WebView, var title: String = "空白页", var url: String = "")
+    private data class Shortcut(val name: String, val url: String)
+    private val shortcuts = mutableListOf<Shortcut>()
     private val tabs = mutableListOf<BrowserTab>()
     private var currentIndex = -1
     private lateinit var pageHost: FrameLayout
@@ -43,6 +50,7 @@ class MainActivity : Activity() {
         window.statusBarColor = translucentBlack
         window.navigationBarColor = translucentBlack
         window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        loadShortcuts()
         buildInterface()
         createTab()
     }
@@ -70,6 +78,15 @@ class MainActivity : Activity() {
             imeOptions = EditorInfo.IME_ACTION_GO
             setPadding(dp(14), 0, dp(10), 0)
             background = rounded(translucentBlack, 24)
+            setOnLongClickListener {
+                val value = text.toString().trim()
+                if (value.isNotEmpty()) {
+                    val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    clipboard.setPrimaryClip(ClipData.newPlainText("地址", value))
+                    Toast.makeText(this@MainActivity, "地址已复制", Toast.LENGTH_SHORT).show()
+                    true
+                } else false
+            }
             setOnEditorActionListener { _, action, _ ->
                 if (action == EditorInfo.IME_ACTION_GO || action == EditorInfo.IME_ACTION_DONE) {
                     loadFromAddress()
@@ -118,12 +135,14 @@ class MainActivity : Activity() {
                     val tab = tabs.firstOrNull { it.web === view } ?: return
                     tab.url = url.orEmpty()
                     if (view === currentWeb() && !address.hasFocus()) address.setText(tab.url)
+                    if (view === currentWeb()) showWebContent(view)
                     updateNavigation()
                 }
                 override fun onPageFinished(view: WebView, url: String?) {
                     val tab = tabs.firstOrNull { it.web === view } ?: return
                     tab.url = url.orEmpty()
                     if (view === currentWeb() && !address.hasFocus()) address.setText(tab.url)
+                    if (view === currentWeb()) showWebContent(view)
                     updateNavigation()
                 }
             }
@@ -169,9 +188,14 @@ class MainActivity : Activity() {
         if (index !in tabs.indices) return
         currentIndex = index
         pageHost.removeAllViews()
-        val web = tabs[index].web
-        (web.parent as? ViewGroup)?.removeView(web)
-        pageHost.addView(web, FrameLayout.LayoutParams(-1, -1))
+        val tab = tabs[index]
+        val web = tab.web
+        if (tab.url.isBlank() || tab.url == "about:blank") {
+            pageHost.removeAllViews()
+            pageHost.addView(buildBlankPage(), FrameLayout.LayoutParams(-1, -1))
+        } else {
+            showWebContent(web)
+        }
         address.setText(tabs[index].url)
         address.setSelection(address.text.length)
         updateNavigation()
@@ -300,6 +324,181 @@ class MainActivity : Activity() {
         address.clearFocus()
         (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager)
             .hideSoftInputFromWindow(address.windowToken, 0)
+    }
+
+    private fun showWebContent(web: WebView) {
+        pageHost.removeAllViews()
+        (web.parent as? ViewGroup)?.removeView(web)
+        pageHost.addView(web, FrameLayout.LayoutParams(-1, -1))
+    }
+
+    private fun loadShortcuts() {
+        val saved = getSharedPreferences("browser", Context.MODE_PRIVATE).getString("shortcuts", null)
+        if (saved == null) {
+            shortcuts.addAll(listOf(
+                Shortcut("Google", "https://www.google.com"),
+                Shortcut("Instagram", "https://www.instagram.com"),
+                Shortcut("X", "https://x.com"),
+                Shortcut("Claude", "https://claude.ai"),
+                Shortcut("ChatGPT", "https://chatgpt.com")
+            ))
+            saveShortcuts()
+            return
+        }
+        try {
+            val array = JSONArray(saved)
+            for (i in 0 until array.length()) {
+                val item = array.getJSONObject(i)
+                val name = item.optString("name").trim()
+                val url = item.optString("url").trim()
+                if (name.isNotEmpty() && url.isNotEmpty()) shortcuts.add(Shortcut(name, url))
+            }
+        } catch (_: Exception) {
+            shortcuts.clear()
+        }
+    }
+
+    private fun saveShortcuts() {
+        val array = JSONArray()
+        shortcuts.forEach {
+            array.put(JSONObject().put("name", it.name).put("url", it.url))
+        }
+        getSharedPreferences("browser", Context.MODE_PRIVATE)
+            .edit().putString("shortcuts", array.toString()).apply()
+    }
+
+    private fun buildBlankPage(): View {
+        val scroll = ScrollView(this).apply {
+            setBackgroundColor(translucentBlack)
+            isFillViewport = true
+        }
+        val grid = GridLayout(this).apply {
+            columnCount = 3
+            useDefaultMargins = false
+            setPadding(dp(14), dp(22), dp(14), dp(22))
+        }
+        fun addTile(name: String, url: String?, index: Int = -1) {
+            val tile = FrameLayout(this).apply {
+                setBackgroundColor(Color.TRANSPARENT)
+                isClickable = true
+                isFocusable = true
+                setOnClickListener {
+                    if (url != null) currentWeb()?.loadUrl(url) else showAddShortcutDialog()
+                }
+            }
+            val content = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = Gravity.CENTER
+                setPadding(dp(4), dp(12), dp(4), dp(8))
+            }
+            val glyph = TextView(this).apply {
+                text = when (name) {
+                    "Google" -> "G"
+                    "Instagram" -> "◎"
+                    "X" -> "X"
+                    "Claude" -> "✳"
+                    "ChatGPT" -> "◉"
+                    else -> name.take(1).uppercase()
+                }
+                textSize = 25f
+                gravity = Gravity.CENTER
+                setTextColor(Color.WHITE)
+                background = rounded(Color.argb(45, 255, 255, 255), 18)
+                layoutParams = LinearLayout.LayoutParams(dp(52), dp(52)).apply {
+                    bottomMargin = dp(7)
+                }
+            }
+            content.addView(glyph)
+            content.addView(TextView(this).apply {
+                text = name
+                textSize = 12f
+                gravity = Gravity.CENTER
+                setTextColor(Color.WHITE)
+                maxLines = 1
+            })
+            tile.addView(content, FrameLayout.LayoutParams(-1, -2))
+            if (index >= 0) {
+                tile.addView(TextView(this).apply {
+                    text = "×"
+                    textSize = 18f
+                    gravity = Gravity.CENTER
+                    setTextColor(Color.LTGRAY)
+                    background = rounded(Color.argb(100, 0, 0, 0), 12)
+                    setOnClickListener {
+                        if (index in shortcuts.indices) {
+                            shortcuts.removeAt(index)
+                            saveShortcuts()
+                            refreshBlankPage()
+                        }
+                    }
+                }, FrameLayout.LayoutParams(dp(26), dp(26), Gravity.TOP or Gravity.END))
+            }
+            grid.addView(tile, GridLayout.LayoutParams().apply {
+                width = 0
+                height = dp(104)
+                columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
+                setMargins(dp(2), dp(2), dp(2), dp(2))
+            })
+        }
+        shortcuts.forEachIndexed { index, shortcut -> addTile(shortcut.name, shortcut.url, index) }
+        addTile("＋", null)
+        scroll.addView(grid, ScrollView.LayoutParams(-1, -2))
+        return scroll
+    }
+
+    private fun refreshBlankPage() {
+        val tab = tabs.getOrNull(currentIndex) ?: return
+        if (tab.url.isBlank() || tab.url == "about:blank") {
+            pageHost.removeAllViews()
+            pageHost.addView(buildBlankPage(), FrameLayout.LayoutParams(-1, -1))
+        }
+    }
+
+    private fun showAddShortcutDialog() {
+        val fields = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(20), dp(8), dp(20), 0)
+        }
+        val nameInput = EditText(this).apply {
+            hint = "名称"
+            setSingleLine(true)
+            setTextColor(Color.WHITE)
+            setHintTextColor(Color.LTGRAY)
+        }
+        val urlInput = EditText(this).apply {
+            hint = "网址，例如 https://example.com"
+            setSingleLine(true)
+            setTextColor(Color.WHITE)
+            setHintTextColor(Color.LTGRAY)
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_URI
+        }
+        fields.addView(nameInput)
+        fields.addView(urlInput)
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("新增快捷入口")
+            .setView(fields)
+            .setNegativeButton("取消", null)
+            .setPositiveButton("添加", null)
+            .create()
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val name = nameInput.text.toString().trim()
+                var url = urlInput.text.toString().trim()
+                if (name.isEmpty() || url.isEmpty()) {
+                    Toast.makeText(this, "请填写名称和网址", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                if (!url.startsWith("https://", true) && !url.startsWith("http://", true)) {
+                    url = "https://$url"
+                }
+                shortcuts.add(Shortcut(name, url))
+                saveShortcuts()
+                dialog.dismiss()
+                refreshBlankPage()
+            }
+        }
+        dialog.show()
+        dialog.window?.setBackgroundDrawable(ColorDrawable(translucentBlack))
     }
 
     private fun currentWeb(): WebView? = tabs.getOrNull(currentIndex)?.web
