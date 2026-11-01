@@ -193,14 +193,100 @@ class MainActivity : Activity() {
 
     private fun showTabs() {
         if (tabs.isEmpty()) return
-        val items = tabs.mapIndexed { i, tab ->
-            (if (i == currentIndex) "● " else "") + "${i + 1}. " + tab.title
-        }.toTypedArray()
-        AlertDialog.Builder(this)
+
+        val list = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(16), dp(8), dp(16), dp(8))
+            setBackgroundColor(Color.TRANSPARENT)
+        }
+        val scroll = android.widget.ScrollView(this).apply {
+            isFillViewport = true
+            addView(list)
+        }
+        val dialog = AlertDialog.Builder(this)
             .setTitle("标签页（${tabs.size}）")
-            .setItems(items) { _, which -> switchTo(which) }
-            .setNegativeButton("取消", null)
-            .show()
+            .setView(scroll)
+            .setNegativeButton("完成", null)
+            .create()
+
+        fun renderRows() {
+            list.removeAllViews()
+            tabs.forEachIndexed { index, tab ->
+                val row = LinearLayout(this).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    gravity = Gravity.CENTER_VERTICAL
+                    setPadding(dp(8), dp(3), dp(4), dp(3))
+                    setBackgroundColor(if (index == currentIndex) Color.argb(34, 255, 255, 255) else Color.TRANSPARENT)
+                }
+                val title = TextView(this).apply {
+                    text = (if (index == currentIndex) "●  " else "") +
+                        "${index + 1}. " + tab.title.ifBlank { "网页" }
+                    textSize = 15f
+                    setTextColor(Color.WHITE)
+                    gravity = Gravity.CENTER_VERTICAL
+                    maxLines = 2
+                    setPadding(dp(8), dp(12), dp(8), dp(12))
+                    isClickable = true
+                    setOnClickListener {
+                        switchTo(index)
+                        dialog.dismiss()
+                    }
+                }
+                row.addView(title, LinearLayout.LayoutParams(0, -2, 1f))
+
+                val close = TextView(this).apply {
+                    text = "×"
+                    textSize = 25f
+                    gravity = Gravity.CENTER
+                    setTextColor(Color.WHITE)
+                    isClickable = true
+                    contentDescription = "关闭第 ${index + 1} 个标签页"
+                    setPadding(dp(14), dp(4), dp(14), dp(4))
+                    setOnClickListener {
+                        closeTabAt(index)
+                        if (tabs.isEmpty()) {
+                            dialog.dismiss()
+                        } else {
+                            dialog.setTitle("标签页（${tabs.size}）")
+                            renderRows()
+                        }
+                    }
+                }
+                row.addView(close, LinearLayout.LayoutParams(dp(52), dp(48)))
+                list.addView(row, LinearLayout.LayoutParams(-1, -2))
+
+                val divider = android.view.View(this).apply {
+                    setBackgroundColor(Color.argb(45, 255, 255, 255))
+                }
+                list.addView(divider, LinearLayout.LayoutParams(-1, dp(1)))
+            }
+        }
+
+        renderRows()
+        dialog.show()
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.argb(242, 12, 12, 12)))
+    }
+
+    private fun closeTabAt(index: Int) {
+        if (index !in tabs.indices) return
+        val wasCurrent = index == currentIndex
+        val removed = tabs.removeAt(index)
+        removed.web.stopLoading()
+        (removed.web.parent as? ViewGroup)?.removeView(removed.web)
+        removed.web.destroy()
+
+        when {
+            tabs.isEmpty() -> {
+                currentIndex = -1
+                createTab()
+            }
+            wasCurrent -> switchTo(index.coerceAtMost(tabs.lastIndex))
+            index < currentIndex -> {
+                currentIndex--
+                updateNavigation()
+            }
+            else -> updateNavigation()
+        }
     }
 
     private fun loadFromAddress() {
