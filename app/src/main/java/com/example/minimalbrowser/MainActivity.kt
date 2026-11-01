@@ -2,13 +2,15 @@ package com.example.minimalbrowser
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.Gravity
-import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
@@ -34,10 +36,13 @@ class MainActivity : Activity() {
     private lateinit var refreshButton: TextView
     private lateinit var tabsButton: TextView
 
+    private val translucentBlack = Color.argb(128, 0, 0, 0)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.statusBarColor = Color.BLACK
-        window.navigationBarColor = Color.BLACK
+        window.statusBarColor = translucentBlack
+        window.navigationBarColor = translucentBlack
+        window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         buildInterface()
         createTab()
     }
@@ -45,7 +50,7 @@ class MainActivity : Activity() {
     private fun buildInterface() {
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(Color.BLACK)
+            setBackgroundColor(translucentBlack)
             fitsSystemWindows = true
         }
         setContentView(root)
@@ -54,17 +59,17 @@ class MainActivity : Activity() {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             setPadding(dp(12), dp(8), dp(12), dp(8))
-            setBackgroundColor(Color.BLACK)
+            setBackgroundColor(translucentBlack)
         }
         address = EditText(this).apply {
             setSingleLine(true)
             textSize = 14f
             setTextColor(Color.WHITE)
-            setHintTextColor(Color.GRAY)
+            setHintTextColor(Color.LTGRAY)
             hint = "搜索或输入网址"
             imeOptions = EditorInfo.IME_ACTION_GO
             setPadding(dp(14), 0, dp(10), 0)
-            background = rounded(Color.rgb(24, 24, 24), 24)
+            background = rounded(translucentBlack, 24)
             setOnEditorActionListener { _, action, _ ->
                 if (action == EditorInfo.IME_ACTION_GO || action == EditorInfo.IME_ACTION_DONE) {
                     loadFromAddress()
@@ -74,18 +79,17 @@ class MainActivity : Activity() {
         }
         top.addView(address, LinearLayout.LayoutParams(0, dp(44), 1f))
         val go = button("↵", 24f) { loadFromAddress() }
-        go.setTextColor(Color.rgb(155, 190, 255))
         top.addView(go, LinearLayout.LayoutParams(dp(44), dp(44)))
         root.addView(top)
 
-        pageHost = FrameLayout(this).apply { setBackgroundColor(Color.BLACK) }
+        pageHost = FrameLayout(this).apply { setBackgroundColor(translucentBlack) }
         root.addView(pageHost, LinearLayout.LayoutParams(-1, 0, 1f))
 
         val bottom = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
             setPadding(dp(5), dp(5), dp(5), dp(7))
-            setBackgroundColor(Color.BLACK)
+            setBackgroundColor(translucentBlack)
         }
         backButton = button("‹", 30f) { currentWeb()?.let { if (it.canGoBack()) it.goBack() } }
         forwardButton = button("›", 30f) { currentWeb()?.let { if (it.canGoForward()) it.goForward() } }
@@ -102,9 +106,9 @@ class MainActivity : Activity() {
         root.addView(bottom)
     }
 
-    private fun createTab() {
+    private fun createTab(openUrl: String? = null) {
         val web = WebView(this).apply {
-            setBackgroundColor(Color.BLACK)
+            setBackgroundColor(translucentBlack)
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             settings.loadsImagesAutomatically = true
@@ -130,12 +134,37 @@ class MainActivity : Activity() {
                     tabs.firstOrNull { it.web === view }?.title = title?.takeIf { it.isNotBlank() } ?: "网页"
                 }
             }
+            setOnLongClickListener {
+                val hit = hitTestResult
+                val link = hit.extra
+                if ((hit.type == WebView.HitTestResult.ANCHOR_TYPE ||
+                     hit.type == WebView.HitTestResult.SRC_ANCHOR_TYPE ||
+                     hit.type == WebView.HitTestResult.IMAGE_TYPE ||
+                     hit.type == WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE) &&
+                    !link.isNullOrBlank()) {
+                    AlertDialog.Builder(this@MainActivity)
+                        .setItems(arrayOf("在新标签页打开", "复制链接")) { _, which ->
+                            when (which) {
+                                0 -> createTab(link)
+                                1 -> {
+                                    val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                    clipboard.setPrimaryClip(ClipData.newPlainText("链接", link))
+                                    Toast.makeText(this@MainActivity, "链接已复制", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                        .setNegativeButton("取消", null)
+                        .show()
+                    true
+                } else false
+            }
             loadUrl("about:blank")
         }
         tabs.add(BrowserTab(web))
         switchTo(tabs.lastIndex)
         address.setText("")
         address.clearFocus()
+        if (!openUrl.isNullOrBlank()) web.loadUrl(openUrl)
     }
 
     private fun switchTo(index: Int) {
@@ -209,7 +238,7 @@ class MainActivity : Activity() {
         isClickable = true
         isFocusable = true
         background = android.graphics.drawable.StateListDrawable().apply {
-            addState(intArrayOf(android.R.attr.state_pressed), rounded(Color.rgb(35, 35, 35), 12))
+            addState(intArrayOf(android.R.attr.state_pressed), rounded(translucentBlack, 12))
             addState(intArrayOf(), rounded(Color.TRANSPARENT, 12))
         }
         setOnClickListener { action() }
