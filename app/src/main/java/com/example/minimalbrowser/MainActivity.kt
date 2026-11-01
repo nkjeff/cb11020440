@@ -409,7 +409,7 @@ class MainActivity : Activity() {
             }
             content.addView(TextView(this).apply {
                 text = url ?: "＋"
-                textSize = if (url == null) 27f else 10f
+                textSize = if (url == null) 27f else 16f
                 gravity = Gravity.CENTER
                 setTextColor(Color.WHITE)
                 maxLines = if (url == null) 1 else 5
