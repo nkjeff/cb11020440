@@ -264,7 +264,7 @@ class MainActivity : Activity() {
 
         renderRows()
         dialog.show()
-        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.argb(242, 12, 12, 12)))
+        dialog.window?.setBackgroundDrawable(ColorDrawable(translucentBlack))
     }
 
     private fun closeTabAt(index: Int) {
