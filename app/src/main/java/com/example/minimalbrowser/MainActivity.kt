@@ -43,13 +43,12 @@ class MainActivity : Activity() {
     private lateinit var refreshButton: TextView
     private lateinit var tabsButton: TextView
 
-    private val translucentBlack = Color.argb(128, 0, 0, 0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.statusBarColor = translucentBlack
-        window.navigationBarColor = translucentBlack
-        window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        window.statusBarColor = Color.BLACK
+        window.navigationBarColor = Color.BLACK
+        window.setBackgroundDrawable(ColorDrawable(Color.BLACK))
         loadShortcuts()
         buildInterface()
         createTab()
@@ -58,7 +57,7 @@ class MainActivity : Activity() {
     private fun buildInterface() {
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(translucentBlack)
+            setBackgroundColor(Color.BLACK)
             fitsSystemWindows = true
             isFocusableInTouchMode = true
             descendantFocusability = ViewGroup.FOCUS_BEFORE_DESCENDANTS
@@ -69,7 +68,7 @@ class MainActivity : Activity() {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
             setPadding(dp(12), dp(8), dp(12), dp(8))
-            setBackgroundColor(translucentBlack)
+            setBackgroundColor(Color.BLACK)
         }
         address = EditText(this).apply {
             setSingleLine(true)
@@ -79,7 +78,7 @@ class MainActivity : Activity() {
             hint = "搜索或输入网址"
             imeOptions = EditorInfo.IME_ACTION_GO
             setPadding(dp(14), 0, dp(10), 0)
-            background = rounded(translucentBlack, 24)
+            background = rounded(Color.BLACK, 24)
             setOnLongClickListener {
                 val value = text.toString().trim()
                 if (value.isNotEmpty()) {
@@ -96,18 +95,18 @@ class MainActivity : Activity() {
                 } else false
             }
         }
-        val addressWidth = (resources.displayMetrics.widthPixels * 0.86f).toInt() - dp(24)
-        top.addView(address, LinearLayout.LayoutParams(addressWidth.coerceAtLeast(dp(160)), dp(32)))
+        val addressWidth = (resources.displayMetrics.widthPixels * 0.50f).toInt()
+        top.addView(address, LinearLayout.LayoutParams(addressWidth.coerceAtLeast(dp(120)), dp(32)))
         root.addView(top)
 
-        pageHost = FrameLayout(this).apply { setBackgroundColor(translucentBlack) }
+        pageHost = FrameLayout(this).apply { setBackgroundColor(Color.BLACK) }
         root.addView(pageHost, LinearLayout.LayoutParams(-1, 0, 1f))
 
         val bottom = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER
             setPadding(dp(5), dp(5), dp(5), dp(7))
-            setBackgroundColor(translucentBlack)
+            setBackgroundColor(Color.BLACK)
         }
         backButton = button("‹", 30f) { currentWeb()?.let { if (it.canGoBack()) it.goBack() } }
         forwardButton = button("›", 30f) { currentWeb()?.let { if (it.canGoForward()) it.goForward() } }
@@ -127,7 +126,7 @@ class MainActivity : Activity() {
 
     private fun createTab(openUrl: String? = null) {
         val web = WebView(this).apply {
-            setBackgroundColor(translucentBlack)
+            setBackgroundColor(Color.BLACK)
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             settings.loadsImagesAutomatically = true
@@ -245,7 +244,7 @@ class MainActivity : Activity() {
                     orientation = LinearLayout.HORIZONTAL
                     gravity = Gravity.CENTER_VERTICAL
                     setPadding(dp(8), dp(3), dp(4), dp(3))
-                    setBackgroundColor(if (index == currentIndex) Color.argb(34, 255, 255, 255) else Color.TRANSPARENT)
+                    setBackgroundColor(if (index == currentIndex) Color.BLACK else Color.BLACK)
                 }
                 val title = TextView(this).apply {
                     text = (if (index == currentIndex) "●  " else "") +
@@ -285,7 +284,7 @@ class MainActivity : Activity() {
                 list.addView(row, LinearLayout.LayoutParams(-1, -2))
 
                 val divider = android.view.View(this).apply {
-                    setBackgroundColor(Color.argb(45, 255, 255, 255))
+                    setBackgroundColor(Color.WHITE)
                 }
                 list.addView(divider, LinearLayout.LayoutParams(-1, dp(1)))
             }
@@ -293,7 +292,7 @@ class MainActivity : Activity() {
 
         renderRows()
         dialog.show()
-        dialog.window?.setBackgroundDrawable(ColorDrawable(translucentBlack))
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.BLACK))
     }
 
     private fun closeTabAt(index: Int) {
@@ -381,7 +380,7 @@ class MainActivity : Activity() {
 
     private fun buildBlankPage(): View {
         val scroll = ScrollView(this).apply {
-            setBackgroundColor(translucentBlack)
+            setBackgroundColor(Color.BLACK)
             isFillViewport = true
         }
         val grid = GridLayout(this).apply {
@@ -482,7 +481,7 @@ class MainActivity : Activity() {
             }
         }
         dialog.show()
-        dialog.window?.setBackgroundDrawable(ColorDrawable(translucentBlack))
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.BLACK))
     }
 
     private fun currentWeb(): WebView? = tabs.getOrNull(currentIndex)?.web
@@ -505,7 +504,7 @@ class MainActivity : Activity() {
         isClickable = true
         isFocusable = true
         background = android.graphics.drawable.StateListDrawable().apply {
-            addState(intArrayOf(android.R.attr.state_pressed), rounded(translucentBlack, 12))
+            addState(intArrayOf(android.R.attr.state_pressed), rounded(Color.BLACK, 12))
             addState(intArrayOf(), rounded(Color.TRANSPARENT, 12))
         }
         setOnClickListener { action() }
