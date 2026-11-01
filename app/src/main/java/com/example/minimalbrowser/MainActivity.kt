@@ -390,54 +390,33 @@ class MainActivity : Activity() {
                 setOnClickListener {
                     if (url != null) currentWeb()?.loadUrl(url) else showAddShortcutDialog()
                 }
-            }
-            val content = LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                gravity = Gravity.CENTER
-                setPadding(dp(4), dp(12), dp(4), dp(8))
-            }
-            val glyph = TextView(this).apply {
-                text = when (name) {
-                    "Google" -> "G"
-                    "Instagram" -> "◎"
-                    "X" -> "X"
-                    "Claude" -> "✳"
-                    "ChatGPT" -> "◉"
-                    else -> name.take(1).uppercase()
-                }
-                textSize = 25f
-                gravity = Gravity.CENTER
-                setTextColor(Color.WHITE)
-                background = rounded(Color.argb(45, 255, 255, 255), 18)
-                layoutParams = LinearLayout.LayoutParams(dp(52), dp(52)).apply {
-                    bottomMargin = dp(7)
-                }
-            }
-            content.addView(glyph)
-            content.addView(TextView(this).apply {
-                text = name
-                textSize = 12f
-                gravity = Gravity.CENTER
-                setTextColor(Color.WHITE)
-                maxLines = 1
-            })
-            tile.addView(content, FrameLayout.LayoutParams(-1, -2))
-            if (index >= 0) {
-                tile.addView(TextView(this).apply {
-                    text = "×"
-                    textSize = 18f
-                    gravity = Gravity.CENTER
-                    setTextColor(Color.LTGRAY)
-                    background = rounded(Color.argb(100, 0, 0, 0), 12)
-                    setOnClickListener {
+                if (index >= 0) {
+                    setOnLongClickListener {
                         if (index in shortcuts.indices) {
                             shortcuts.removeAt(index)
                             saveShortcuts()
                             refreshBlankPage()
+                            Toast.makeText(this@MainActivity, "快捷入口已删除", Toast.LENGTH_SHORT).show()
                         }
+                        true
                     }
-                }, FrameLayout.LayoutParams(dp(26), dp(26), Gravity.TOP or Gravity.END))
+                }
             }
+            val content = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = Gravity.CENTER
+                setPadding(dp(5), dp(10), dp(5), dp(10))
+            }
+            content.addView(TextView(this).apply {
+                text = url ?: "＋"
+                textSize = if (url == null) 27f else 10f
+                gravity = Gravity.CENTER
+                setTextColor(Color.WHITE)
+                maxLines = if (url == null) 1 else 5
+                ellipsize = android.text.TextUtils.TruncateAt.END
+                setLineSpacing(dp(1).toFloat(), 1f)
+            })
+            tile.addView(content, FrameLayout.LayoutParams(-1, -2))
             grid.addView(tile, GridLayout.LayoutParams().apply {
                 width = 0
                 height = dp(104)
