@@ -60,12 +60,14 @@ class MainActivity : Activity() {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(translucentBlack)
             fitsSystemWindows = true
+            isFocusableInTouchMode = true
+            descendantFocusability = ViewGroup.FOCUS_BEFORE_DESCENDANTS
         }
         setContentView(root)
 
         val top = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
+            gravity = Gravity.CENTER
             setPadding(dp(12), dp(8), dp(12), dp(8))
             setBackgroundColor(translucentBlack)
         }
@@ -94,7 +96,8 @@ class MainActivity : Activity() {
                 } else false
             }
         }
-        top.addView(address, LinearLayout.LayoutParams(-1, dp(44)))
+        val addressWidth = (resources.displayMetrics.widthPixels * 0.86f).toInt() - dp(24)
+        top.addView(address, LinearLayout.LayoutParams(addressWidth.coerceAtLeast(dp(160)), dp(32)))
         root.addView(top)
 
         pageHost = FrameLayout(this).apply { setBackgroundColor(translucentBlack) }
@@ -119,6 +122,7 @@ class MainActivity : Activity() {
             bottom.addView(it, LinearLayout.LayoutParams(0, dp(48), 1f))
         }
         root.addView(bottom)
+        root.requestFocus()
     }
 
     private fun createTab(openUrl: String? = null) {
@@ -181,6 +185,7 @@ class MainActivity : Activity() {
         switchTo(tabs.lastIndex)
         address.setText("")
         address.clearFocus()
+        pageHost.requestFocus()
         if (!openUrl.isNullOrBlank()) web.loadUrl(openUrl)
     }
 
@@ -198,6 +203,8 @@ class MainActivity : Activity() {
         }
         address.setText(tabs[index].url)
         address.setSelection(address.text.length)
+        address.clearFocus()
+        pageHost.requestFocus()
         updateNavigation()
     }
 
