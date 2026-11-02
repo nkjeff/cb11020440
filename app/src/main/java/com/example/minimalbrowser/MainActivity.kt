@@ -142,7 +142,7 @@ class MainActivity : Activity() {
         root.requestFocus()
     }
 
-    private fun createTab(openUrl: String? = null) {
+    private fun createTab(openUrl: String? = null): WebView {
         val web = WebView(this).apply {
             setBackgroundColor(Color.BLACK)
             settings.javaScriptEnabled = true
@@ -156,8 +156,10 @@ class MainActivity : Activity() {
                 .replace("Version/4.0 ", "")
             android.webkit.CookieManager.getInstance().setAcceptCookie(true)
             android.webkit.CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
-            settings.javaScriptCanOpenWindowsAutomatically = false
-            settings.setSupportMultipleWindows(false)
+            // Allow normal mobile-site popups (for example, opening a post in a new tab).
+            // This improves browser compatibility but does not bypass sign-in requirements.
+            settings.javaScriptCanOpenWindowsAutomatically = true
+            settings.setSupportMultipleWindows(true)
             webViewClient = object : WebViewClient() {
                 override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest) = false
                 override fun onPageStarted(view: WebView, url: String?, favicon: android.graphics.Bitmap?) {
@@ -178,6 +180,20 @@ class MainActivity : Activity() {
             webChromeClient = object : WebChromeClient() {
                 override fun onReceivedTitle(view: WebView, title: String?) {
                     tabs.firstOrNull { it.web === view }?.title = title?.takeIf { it.isNotBlank() } ?: "网页"
+                }
+
+                override fun onCreateWindow(
+                    view: WebView?,
+                    isDialog: Boolean,
+                    isUserGesture: Boolean,
+                    resultMsg: android.os.Message
+                ): Boolean {
+                    // Open target=_blank / window.open links in a new browser tab.
+                    val popupWeb = createTab()
+                    val transport = resultMsg.obj as WebView.WebViewTransport
+                    transport.webView = popupWeb
+                    resultMsg.sendToTarget()
+                    return true
                 }
             }
             setOnLongClickListener {
@@ -212,6 +228,7 @@ class MainActivity : Activity() {
         address.clearFocus()
         pageHost.requestFocus()
         if (!openUrl.isNullOrBlank()) web.loadUrl(openUrl)
+        return web
     }
 
     private fun switchTo(index: Int) {
