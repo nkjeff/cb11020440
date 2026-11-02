@@ -10,6 +10,8 @@ import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
+import android.os.Build
+import android.view.WindowInsets
 import android.view.View
 import android.view.Gravity
 import android.view.ViewGroup
@@ -49,6 +51,9 @@ class MainActivity : Activity() {
         window.statusBarColor = Color.BLACK
         window.navigationBarColor = Color.BLACK
         window.setBackgroundDrawable(ColorDrawable(Color.BLACK))
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.setDecorFitsSystemWindows(false)
+        }
         loadShortcuts()
         buildInterface()
         createTab()
@@ -58,9 +63,23 @@ class MainActivity : Activity() {
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(Color.BLACK)
-            fitsSystemWindows = true
+            fitsSystemWindows = false
             isFocusableInTouchMode = true
             descendantFocusability = ViewGroup.FOCUS_BEFORE_DESCENDANTS
+        }
+        root.setOnApplyWindowInsetsListener { view, insets ->
+            val statusBarTop = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                insets.getInsets(WindowInsets.Type.statusBars()).top
+            } else {
+                insets.systemWindowInsetTop
+            }
+            val navigationBarBottom = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                insets.getInsets(WindowInsets.Type.navigationBars()).bottom
+            } else {
+                insets.systemWindowInsetBottom
+            }
+            view.setPadding(view.paddingLeft, statusBarTop, view.paddingRight, navigationBarBottom)
+            insets
         }
         setContentView(root)
 
