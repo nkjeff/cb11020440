@@ -85,7 +85,7 @@ class MainActivity : Activity() {
 
         val top = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER
+            gravity = Gravity.CENTER_VERTICAL
             setPadding(dp(12), dp(8), dp(12), dp(8))
             setBackgroundColor(Color.BLACK)
         }
@@ -93,11 +93,11 @@ class MainActivity : Activity() {
             setSingleLine(true)
             textSize = 14f
             setTextColor(Color.WHITE)
-            setHintTextColor(Color.LTGRAY)
+            setHintTextColor(Color.GRAY)
             hint = "搜索或输入网址"
             imeOptions = EditorInfo.IME_ACTION_GO
             setPadding(dp(14), 0, dp(10), 0)
-            background = rounded(Color.BLACK, 24)
+            background = rounded(Color.rgb(24, 24, 24), 24)
             setOnLongClickListener {
                 val value = text.toString().trim()
                 if (value.isNotEmpty()) {
@@ -114,8 +114,10 @@ class MainActivity : Activity() {
                 } else false
             }
         }
-        val addressWidth = (resources.displayMetrics.widthPixels * 0.86f).toInt() - dp(24)
-        top.addView(address, LinearLayout.LayoutParams(addressWidth.coerceAtLeast(dp(160)), dp(32)))
+        top.addView(address, LinearLayout.LayoutParams(0, dp(44), 1f))
+        val go = button("↵", 24f) { loadFromAddress() }
+        go.setTextColor(Color.rgb(155, 190, 255))
+        top.addView(go, LinearLayout.LayoutParams(dp(44), dp(44)))
         root.addView(top)
 
         pageHost = FrameLayout(this).apply { setBackgroundColor(Color.BLACK) }
