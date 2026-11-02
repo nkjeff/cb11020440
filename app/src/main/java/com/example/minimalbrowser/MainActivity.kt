@@ -148,18 +148,6 @@ class MainActivity : Activity() {
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             settings.loadsImagesAutomatically = true
-            // Present WebView as a regular mobile browser for public social pages.
-            // Removing the embedded-WebView markers improves compatibility without
-            // bypassing account checks, login walls, or platform access restrictions.
-            settings.userAgentString = settings.userAgentString
-                .replace("; wv", "")
-                .replace("Version/4.0 ", "")
-            android.webkit.CookieManager.getInstance().setAcceptCookie(true)
-            android.webkit.CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
-            // Allow normal mobile-site popups (for example, opening a post in a new tab).
-            // This improves browser compatibility but does not bypass sign-in requirements.
-            settings.javaScriptCanOpenWindowsAutomatically = true
-            settings.setSupportMultipleWindows(true)
             webViewClient = object : WebViewClient() {
                 override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest) = false
                 override fun onPageStarted(view: WebView, url: String?, favicon: android.graphics.Bitmap?) {
@@ -180,20 +168,6 @@ class MainActivity : Activity() {
             webChromeClient = object : WebChromeClient() {
                 override fun onReceivedTitle(view: WebView, title: String?) {
                     tabs.firstOrNull { it.web === view }?.title = title?.takeIf { it.isNotBlank() } ?: "网页"
-                }
-
-                override fun onCreateWindow(
-                    view: WebView?,
-                    isDialog: Boolean,
-                    isUserGesture: Boolean,
-                    resultMsg: android.os.Message
-                ): Boolean {
-                    // Open target=_blank / window.open links in a new browser tab.
-                    val popupWeb = createTab()
-                    val transport = resultMsg.obj as WebView.WebViewTransport
-                    transport.webView = popupWeb
-                    resultMsg.sendToTarget()
-                    return true
                 }
             }
             setOnLongClickListener {
@@ -390,8 +364,6 @@ class MainActivity : Activity() {
         if (saved == null) {
             shortcuts.addAll(listOf(
                 Shortcut("Google", "https://www.google.com"),
-                Shortcut("Instagram", "https://www.instagram.com"),
-                Shortcut("X", "https://x.com"),
                 Shortcut("Claude", "https://claude.ai"),
                 Shortcut("ChatGPT", "https://chatgpt.com")
             ))
@@ -404,7 +376,15 @@ class MainActivity : Activity() {
                 val item = array.getJSONObject(i)
                 val name = item.optString("name").trim()
                 val url = item.optString("url").trim()
-                if (name.isNotEmpty() && url.isNotEmpty()) shortcuts.add(Shortcut(url, url))
+                val host = url.removePrefix("https://").removePrefix("http://").substringBefore("/").lowercase()
+                val isRemovedSocialShortcut = name.equals("Instagram", true) ||
+                    name.equals("X", true) ||
+                    host == "instagram.com" || host.endsWith(".instagram.com") ||
+                    host == "x.com" || host.endsWith(".x.com") ||
+                    host == "twitter.com" || host.endsWith(".twitter.com")
+                if (name.isNotEmpty() && url.isNotEmpty() && !isRemovedSocialShortcut) {
+                    shortcuts.add(Shortcut(name, url))
+                }
             }
         } catch (_: Exception) {
             shortcuts.clear()
