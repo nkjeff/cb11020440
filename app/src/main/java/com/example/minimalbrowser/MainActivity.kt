@@ -148,6 +148,14 @@ class MainActivity : Activity() {
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             settings.loadsImagesAutomatically = true
+            // Present WebView as a regular mobile browser for public social pages.
+            // Removing the embedded-WebView markers improves compatibility without
+            // bypassing account checks, login walls, or platform access restrictions.
+            settings.userAgentString = settings.userAgentString
+                .replace("; wv", "")
+                .replace("Version/4.0 ", "")
+            android.webkit.CookieManager.getInstance().setAcceptCookie(true)
+            android.webkit.CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
             settings.javaScriptCanOpenWindowsAutomatically = false
             settings.setSupportMultipleWindows(false)
             webViewClient = object : WebViewClient() {
