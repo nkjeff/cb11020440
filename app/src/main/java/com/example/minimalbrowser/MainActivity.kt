@@ -114,7 +114,7 @@ class MainActivity : Activity() {
                 } else false
             }
         }
-        top.addView(address, LinearLayout.LayoutParams(-1, dp(44)))
+        top.addView(address, LinearLayout.LayoutParams(-1, dp(22)))
         root.addView(top)
 
         pageHost = FrameLayout(this).apply { setBackgroundColor(Color.BLACK) }
